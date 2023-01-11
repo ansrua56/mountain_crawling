@@ -6,6 +6,20 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 
 ################## 수정 및 적용 부분!
+file = "C:/projects/crawling/search_data.txt"
+m_list = []
+
+if os.path.isfile(file):
+    f = open(file,'r')
+    lines = f.readlines()
+    for i in lines:
+        m_list[i]
+    f.close()
+
+else:
+    m_list.append('None')
+
+print(m_list)
 
 mountainName = input('산 이름 입력: ')
 
