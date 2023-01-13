@@ -1,4 +1,4 @@
-import os, re, requests, time, base64
+import os, requests, time, base64, pymysql
 
 from bs4 import BeautifulSoup
 from selenium import webdriver
@@ -6,20 +6,20 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 
 ################## 수정 및 적용 부분!
-file = "C:/projects/crawling/search_data.txt"
-m_list = []
+# file = "C:/projects/crawling/search_data.txt"
+# m_list = []
 
-if os.path.isfile(file):
-    f = open(file,'r')
-    lines = f.readlines()
-    for i in lines:
-        m_list[i]
-    f.close()
+# if os.path.isfile(file):
+#     f = open(file,'r')
+#     lines = f.readlines()
+#     for i in lines:
+#         m_list[i]
+#     f.close()
 
-else:
-    m_list.append('None')
+# else:
+#     m_list.append('None')
 
-print(m_list)
+# print(m_list)
 
 mountainName = input('산 이름 입력: ')
 
@@ -31,17 +31,18 @@ def crawl_info(mountainName) :
     soup = BeautifulSoup(res.text,"html.parser")
     time.sleep(1)
     info = []
-    temp_a = soup.select_one(".y4sYp > .SF_Mq")        # 네이버 산정보
-    temp_b = soup.select_one(".xHaT3 > .zPfVt")        # 네이버 산 설명글
-    if temp_a == None:  # 산이 아닌걸 검색시 메세지 창이 뜸
+    exist_mountain = soup.select_one(".PkgBl > .LDgIH")        # 네이버 주소값 (html 경로가 바뀔때가 있음. info index 오류나면 확인해보기)
+    info_mountain = soup.select(".xHaT3 > .zPfVt")        # 네이버 산 설명글
+    if exist_mountain == None:  # 산이 아닌걸 검색시 메세지 창이 뜸
         pass
     else:
-        if temp_b == None:  # 산의 설명글 정보가 없을시
+        if len(info_mountain) == 0:  # 산의 설명글 정보가 없을시
             info.append("등록된 산 정보가 없습니다.")
             # 설명글 추가 버튼 만들면 좋을 거 같음
+        elif len(info_mountain) == 1:
+            info.append(info_mountain[0].text)
         else:
-            for i in soup.select(".xHaT3 > .zPfVt"):    # 네이버 설명글 저장
-                info.append("설명글 : " + i.text)
+            info.append(info_mountain[-1].text) # 설명글은 항상 마지막에 있기 때문에 index에 -1
     return info
 
 def crawl_location(mountainName) :
@@ -98,9 +99,9 @@ def crawl_img(mountainName) :
         pass
 
     before_height = 0
+    img_name = 0
     while True:
-        
-        time.sleep(1)
+        time.sleep(2)
         soup = BeautifulSoup(driver.page_source,"html.parser")
         br_img = soup.select('.islrc > .isv-r > .wXeWr > div > img')
 
@@ -112,9 +113,8 @@ def crawl_img(mountainName) :
                 if type(img_path) != str:
                     img_path = i.get('data-src')
 
-                # 이미지 이름 추출 및 정규표현식
-                img_name = i.get('alt')
-                img_name = re.sub('[\/:*?"<>|]',"_",img_name)  
+                # 이미지 이름 지정 및 정규표현식
+                img_name += 1 
                 img_type = img_path.split(":")[0]
 
             except:
@@ -126,7 +126,7 @@ def crawl_img(mountainName) :
                 # 같은 파일 생성시 오류 발생 해결을 위해 try:except문 사용
                 try:
                     x = img_path.split(",")[1]
-                    f = open(f"C:/projects/project_M/static/images/{mountainName}/{img_name}.jpeg","wb")
+                    f = open(f"C:/projects/project_M/static/images/{mountainName}/pic_{img_name}.jpeg","wb")
                     img = base64.b64decode(f"{x}")
                     f.write(img)
                     f.close()
@@ -134,6 +134,8 @@ def crawl_img(mountainName) :
                     temp_split = f.name.split("/")
                     img_url = temp_split[4]+"/"+temp_split[5]+"/"+temp_split[6]
                     # print(img_url) # img_url 확인용
+                    sql = f"insert into mydb.main_mountain_img(img_url, create_date, mountain_id) values('{img_url}', now(), '{mountainName}');"
+                    cur.execute(sql)
 
                 except:
                     pass
@@ -143,13 +145,15 @@ def crawl_img(mountainName) :
                 # 같은 파일 생성시 오류 발생 해결을 위해 try:except문 사용
                 try:
                     res = requests.get(img_path)
-                    f = open(f"C:/projects/project_M/static/images/{mountainName}/{img_name}.jpeg","wb")
+                    f = open(f"C:/projects/project_M/static/images/{mountainName}/pic_{img_name}.jpeg","wb")
                     f.write(res.content)
                     f.close()
 
                     temp_split = f.name.split("/")
                     img_url = temp_split[4]+"/"+temp_split[5]+"/"+temp_split[6]
                     # print(img_url) # img_url 확인용
+                    sql = f"insert into mydb.main_mountain_img(img_url, create_date,  mountain_id) values('{img_url}', now(), '{mountainName}');"
+                    cur.execute(sql)
 
                 except:
                     pass
@@ -167,6 +171,25 @@ def crawl_img(mountainName) :
 
     time.sleep(0.5)
 
-print(crawl_info(mountainName))
-print(crawl_location(mountainName))
+# print(crawl_info(mountainName))
+# print(crawl_location(mountainName))
 
+info = crawl_info(mountainName)
+address, latlng = crawl_location(mountainName)
+
+
+con = pymysql.connect(host='murloc-mysql.clexteph0vvi.ap-northeast-2.rds.amazonaws.com',
+                        user='admin', password='murloc1552!', db='mydb', charset='utf8')
+cur = con.cursor()
+
+sql = f"insert into mydb.main_mountain values ('{mountainName}', '{address}', '{latlng[0]}', '{latlng[1]}', '{info[0]}', now(), '');"
+cur.execute(sql)
+# con.commit()
+
+crawl_img(mountainName)
+
+# rows = cur.fetchall()
+# print(rows)
+
+con.commit()
+con.close()
