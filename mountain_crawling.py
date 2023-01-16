@@ -134,7 +134,7 @@ def crawl_img(mountainName) :
                     temp_split = f.name.split("/")
                     img_url = temp_split[4]+"/"+temp_split[5]+"/"+temp_split[6]
                     # print(img_url) # img_url 확인용
-                    sql = f"insert into mydb.main_mountain_img(img_url, create_date, mountain_id) values('{img_url}', now(), '{mountainName}');"
+                    sql = f"insert into mydb.main_mountain_img values('{img_url}', '{mountainName}');"
                     cur.execute(sql)
 
                 except:
@@ -152,7 +152,7 @@ def crawl_img(mountainName) :
                     temp_split = f.name.split("/")
                     img_url = temp_split[4]+"/"+temp_split[5]+"/"+temp_split[6]
                     # print(img_url) # img_url 확인용
-                    sql = f"insert into mydb.main_mountain_img(img_url, create_date,  mountain_id) values('{img_url}', now(), '{mountainName}');"
+                    sql = f"insert into mydb.main_mountain_img values('{img_url}', '{mountainName}');"
                     cur.execute(sql)
 
                 except:
@@ -182,7 +182,7 @@ con = pymysql.connect(host='murloc-mysql.clexteph0vvi.ap-northeast-2.rds.amazona
                         user='admin', password='murloc1552!', db='mydb', charset='utf8')
 cur = con.cursor()
 
-sql = f"insert into mydb.main_mountain values ('{mountainName}', '{address}', '{latlng[0]}', '{latlng[1]}', '{info[0]}', now(), '');"
+sql = f"insert into mydb.main_mountain values ('{mountainName}', '{address}', '{latlng[0]}', '{latlng[1]}', '{info[0]}');"
 cur.execute(sql)
 # con.commit()
 
