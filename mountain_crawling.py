@@ -134,8 +134,9 @@ def crawl_img(mountainName) :
                     temp_split = f.name.split("/")
                     img_url = temp_split[4]+"/"+temp_split[5]+"/"+temp_split[6]
                     # print(img_url) # img_url 확인용
-                    sql = f"insert into mydb.main_mountain_img values('{img_url}', '{mountainName}');"
+                    sql = f"insert into mydb.main_mountain_img(img_url, mountain_id) values('{img_url}', '{mountainName}');"
                     cur.execute(sql)
+                    
 
                 except:
                     pass
@@ -152,7 +153,7 @@ def crawl_img(mountainName) :
                     temp_split = f.name.split("/")
                     img_url = temp_split[4]+"/"+temp_split[5]+"/"+temp_split[6]
                     # print(img_url) # img_url 확인용
-                    sql = f"insert into mydb.main_mountain_img values('{img_url}', '{mountainName}');"
+                    sql = f"insert into mydb.main_mountain_img(img_url, mountain_id) values('{img_url}', '{mountainName}');"
                     cur.execute(sql)
 
                 except:
